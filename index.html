@@ -248,8 +248,9 @@ home();
 @keyframes missionLaunch{0%{opacity:0;transform:translate(-50%,-30px) scale(.9)}9%{opacity:1;transform:translate(-50%,0) scale(1)}70%{opacity:1}100%{opacity:0;transform:translate(-50%,-12px) scale(1.03)}}
 @media(prefers-reduced-motion:reduce){.mission-launch-banner{animation:none;display:none}}
 @media print{.mission-launch-banner{display:none}}
+ .sound-panel select{background:#102d4b;color:#fff;border:1px solid #66a7cf;border-radius:8px;padding:6px;font-size:13px;max-width:150px}
 </style>
-<div class="sound-panel" aria-label="効果音設定"><button id="soundSwitch" type="button" onclick="missionSound.toggle()" aria-pressed="true">🔊 効果音 ON</button><label for="soundVolume">音量</label><input id="soundVolume" type="range" min="0" max="100" value="100" oninput="missionSound.volume(this.value)" aria-label="効果音の音量"><button type="button" class="sound-preview" onclick="missionSound.play('intro')" title="スタート音楽を試聴">🚨 開始音楽</button><button type="button" class="sound-preview" onclick="missionSound.play('select')" title="コース選択音を試聴">🎮 選択音</button><button type="button" class="sound-preview" onclick="missionSound.play('correct')" title="正解音を試聴">🎉 正解音</button><button type="button" class="sound-preview" onclick="missionSound.play('wrong')" title="不正解音を試聴">😢 残念音</button></div>
+<div class="sound-panel" aria-label="効果音設定"><button id="soundSwitch" type="button" onclick="missionSound.toggle()" aria-pressed="true">🔊 効果音 ON</button><label for="soundVolume">音量</label><input id="soundVolume" type="range" min="0" max="100" value="100" oninput="missionSound.volume(this.value)" aria-label="効果音の音量"><label for="introPattern">開始音</label><select id="introPattern" aria-label="開始音楽パターン"><option value="A">A ヒーロー出動</option><option value="B">B 緊急ミッション</option><option value="C">C チャレンジ開始</option></select><button type="button" class="sound-preview" onclick="missionSound.play('intro')" title="選択した開始音楽を試聴">▶ 開始音を試聴</button><button type="button" class="sound-preview" onclick="missionSound.play('select')" title="コース選択音を試聴">🎮 選択音</button><button type="button" class="sound-preview" onclick="missionSound.play('correct')" title="正解音を試聴">🎉 正解音</button><button type="button" class="sound-preview" onclick="missionSound.play('wrong')" title="不正解音を試聴">😢 残念音</button></div>
 <script>
 /* Web Audio synthesized sound effects. No network or external audio files needed. */
 const missionSound=(()=>{
@@ -275,14 +276,16 @@ const missionSound=(()=>{
    note(293.66,.51,.48,'triangle',.20,174.61);
    note(174.61,.80,.32,'sine',.12,155.56);
   }else if(kind==='intro'){
-   // ~4-second upbeat, triumphant launch fanfare with a lively rhythmic opening.
-   const melody=[[523.25,0,.15],[659.25,.18,.15],[783.99,.36,.20],[1046.5,.59,.32],
-     [783.99,1.00,.14],[880,1.18,.14],[1046.5,1.37,.32],
-     [1174.66,1.82,.16],[1318.51,2.02,.16],[1567.98,2.24,.24],[2093,2.57,.70]];
-   melody.forEach(([f,t,d])=>note(f,t,d,'triangle',.19));
-   [0,.36,.72,1.08,1.44,1.80,2.16,2.52].forEach((t,i)=>note(i%2?196:261.63,t,.11,'square',.075));
-   [523.25,659.25,783.99].forEach(f=>note(f,2.64,.62,'sine',.065));
-   note(2637,3.05,.23,'sine',.055);
+   // Short, lively launch jingles: ~0.9 seconds each.
+   const patterns={
+    A:[[523.25,0,.10],[659.25,.11,.10],[783.99,.22,.11],[1046.5,.35,.15],[1567.98,.52,.30]],
+    B:[[440,0,.075],[880,.09,.08],[1320,.20,.11],[1760,.35,.14],[2093,.53,.29]],
+    C:[[659.25,0,.085],[783.99,.10,.085],[987.77,.20,.09],[1318.51,.32,.14],[1567.98,.50,.31]]
+   };
+   const choice=(document.getElementById('introPattern')||{}).value||'A';
+   patterns[choice].forEach(([f,t,d])=>note(f,t,d,choice==='B'?'square':'triangle',choice==='B'?.10:.18));
+   [0,.19,.38,.57].forEach((t,i)=>note(i%2?196:261.63,t,.045,'square',.045));
+   [523.25,659.25,783.99].forEach(f=>note(f,.60,.24,'sine',.05));
   }else if(kind==='finish'){
    // Longer victory fanfare at the end of five questions.
    [[392,0,.15],[523.25,.15,.15],[659.25,.30,.15],[783.99,.45,.25],[659.25,.72,.14],[783.99,.86,.14],[1046.5,1,.62]].forEach(([f,t,d])=>note(f,t,d,'triangle',.19));

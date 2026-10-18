@@ -1,3 +1,1 @@
-MISSION 119 Ver.3.0
-ZIP内のindex.htmlをGitHub Pagesの公開リポジトリに上書きしてください。
-新機能：コース選択時のクリック音と試聴ボタン。既存の効果音・音量調整は維持。
+GitHub Pagesの公開リポジトリにindex.htmlをアップロード・上書きしてください。開始音A/B/Cは約0.9秒です。
