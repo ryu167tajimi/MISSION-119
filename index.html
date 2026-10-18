@@ -212,7 +212,7 @@ const rankArt=['',
 
 function home(){category=null;tier=null;set(`<section class="mission-hub"><div class="hub-kicker"><span class="live-dot"></span> KASAHARA FIRE DEPARTMENT <span class="hub-right">MISSION CONTROL // 119</span></div><div class="hub-hero"><div class="hub-emblem">🚒</div><div><div class="hub-eyebrow">CHOOSE YOUR MISSION</div><h2>挑戦するミッションを選べ！</h2><p>5つの分野 × 3つの難易度。仲間と相談して、伝説の消防士を目指そう。</p></div></div><div class="hub-status"><span>⚡ <b>15</b> ミッション</span><span>🎯 <b>75</b> 問</span><span>🏆 最高難易度：伝説の消防士</span></div><div class="mission-categories cinematic-categories">${cats.map((c,i)=>`<section class="mission-category cinematic-category category-${i}"><div class="category-head"><div class="category-mark">${icons[i]}</div><div class="category-name"><span class="category-index">MISSION 0${i+1} / ${['FIRE OPERATIONS','EMERGENCY MEDICAL','DISASTER RESPONSE','FIRE PREVENTION','FIREFIGHTER LIFE'][i]}</span><h3>${esc(c)}</h3><span class="category-caption">${['火災現場の判断力を試せ','命を守る判断に挑戦','災害から地域を守れ','火災を未然に防げ','消防士の仕事を知ろう'][i]}</span></div><div class="category-total">全15問</div></div><div class="mission-levels">${[1,2,3].map(n=>`<button type="button" class="mission-level level-${n}" onclick="start('${c}',${n})" aria-label="${esc(c)} ${tierNames[n]}コース 5問"><span class="ml-card-number" aria-hidden="true">0${n}</span><span class="ml-eyebrow"><span class="ml-led"></span>${['','RANK 01','RANK 02','RANK 03'][n]}</span><span class="ml-crest" aria-hidden="true">${rankArt[n]}</span><span class="ml-rank">${['','ROOKIE','ELITE','LEGEND'][n]}</span><strong>${tierNames[n]}</strong><span class="ml-stars" aria-hidden="true">${'★'.repeat(n)}${'☆'.repeat(3-n)}</span><span class="ml-launch"><span>5問に挑戦 ↗</span></span></button>`).join('')}</div></section>`).join('')}</div><div class="hub-footer">🚨 自分たちで難易度を選ぼう！　ヒントは3段階。みんなで作戦会議して挑戦！</div></section>`)}
 function selectCourse(c){category=c;tier=null;set(`<section class="panel"><h2>🔥 ${esc(c)}｜レベルを選ぼう</h2><p>3つのコースから選んで挑戦！それぞれ5問、合計15問です。</p><div class="level-grid">${[1,2,3].map(n=>`<button class="level-card level-${n}" onclick="start('${c}',${n})"><span class="level-icon">${tierIcons[n]}</span><span class="level-label">LEVEL ${n}｜${['','初級','中級','上級'][n]}</span><strong>${tierNames[n]}</strong><span class="level-count">5問に挑戦 <span aria-hidden="true">➜</span></span></button>`).join('')}</div><div class="controls"><button class="btn alt" onclick="home()">← コース選択へ</button></div></section>`)}
-function start(c,t=null){category=c;tier=t;idx=0;points=0;correctCount=0;render()}
+function start(c,t=null){if(typeof missionSound!=='undefined')missionSound.play('select');category=c;tier=t;idx=0;points=0;correctCount=0;render()}
 function render(){const a=list();if(idx>=a.length){finish();return}const q=a[idx];hints=0;selected=[];locked=false;set(`<section class="panel"><div class="pill">${esc(q.cat)}｜${tier===null?"全レベル":tierNames[tier]}｜第${idx+1}問 / ${a.length}問</div> <span class="tag">難易度 ${'★'.repeat(q.level)}</span><div class="progress"><div style="width:${idx/a.length*100}%"></div></div><div class="muted">合計 ${points}点｜正解 ${correctCount}問</div><div class="illustration">${illustrations[q.cat]}</div><div class="photo" id="photo"><div class="fallback">📷 実写写真を追加するとここに表示されます<br><small>写真なしでも問題を解けます</small></div></div><label class="upload">📁 この問題に実写写真を追加 <input type="file" accept="image/*" onchange="upload(event)"></label><h2>${esc(q.q)}</h2><div class="discussion">💬 ${esc(q.discussion)}</div><p class="muted">${q.multi?'☑ 複数正解：正しいものをすべて選択':'◉ 5択：正しいものを1つ選択'}</p><div id="options">${q.opts.map((o,j)=>`<button class="choice" id="o${j}" onclick="toggle(${j})"><span class="letter">${'ABCDE'[j]}</span><span>${esc(o)}</span></button>`).join('')}</div><div id="hints"></div><div id="feedback"></div><div class="controls"><button id="answerBtn" class="btn" onclick="confirmAnswer()" disabled>回答を確定</button><button id="hintBtn" class="btn alt" onclick="showHint()">💡 ヒント①を見る</button><button class="btn alt" onclick="home()">コース選択へ</button></div></section>`);if(photos[questions.indexOf(q)])showPhoto(photos[questions.indexOf(q)])}function toggle(j){if(locked)return;const q=list()[idx];if(q.multi){selected=selected.includes(j)?selected.filter(x=>x!==j):[...selected,j]}else selected=[j];q.opts.forEach((_,k)=>$('#o'+k).classList.toggle('chosen',selected.includes(k)));$('#answerBtn').disabled=!selected.length}function showHint(){if(locked||hints>=3)return;const q=list()[idx];hints++;$('#hints').innerHTML+=`<div class="hint"><b>💡 ヒント${'①②③'[hints-1]}</b><p>${esc(q.h[hints-1])}</p></div>`;$('#hintBtn').textContent=hints===3?'ヒントはすべて表示済み':`💡 ヒント${'①②③'[hints]}を見る`;if(hints===3)$('#hintBtn').disabled=true}function confirmAnswer(){if(locked||!selected.length)return;locked=true;const q=list()[idx];const ok=selected.length===q.answers.length&&selected.every(x=>q.answers.includes(x));const gain=ok?100-20*hints:0;points+=gain;if(ok)correctCount++;q.opts.forEach((_,k)=>{const b=$('#o'+k);b.disabled=true;if(q.answers.includes(k))b.classList.add('correct');else if(selected.includes(k))b.classList.add('wrong')});$('#hintBtn').disabled=true;$('#answerBtn').disabled=true;$('#feedback').innerHTML=`<div class="result"><h3>${ok?'🎉 正解！ +'+gain+'点':'惜しい！ もう一度解説を確認しよう'}</h3><p><b>正解：</b>${q.answers.map(x=>'ABCDE'[x]+' '+esc(q.opts[x])).join('／')}</p><p>${esc(q.ex)}</p><p class="muted">チームで「なぜ他の選択肢が違うのか」も説明してみよう。</p><button class="btn" onclick="idx++;render()">${idx===list().length-1?'🏆 結果を見る':'次の問題へ →'}</button></div>`}function finish(){set(`<section class="panel" style="text-align:center"><div style="font-size:65px">🏆</div><h2>ミッション完了！</h2><div class="score">${points} / ${list().length*100} 点</div><p>${correctCount} / ${list().length} 問正解</p><p>消防の仕事は、仲間との相談・判断・情報共有が大切です！</p><div class="controls" style="justify-content:center"><button class="btn" onclick="start(category,tier)">再挑戦</button><button class="btn alt" onclick="home()">コース一覧へ</button><button class="btn alt" onclick="home()">別のコース</button><button class="btn alt" onclick="window.print()">結果を印刷</button></div></section>`)}function upload(e){const f=e.target.files[0];if(!f)return;const key=questions.indexOf(list()[idx]);const reader=new FileReader();reader.onload=()=>{photos[key]=reader.result;showPhoto(reader.result)};reader.readAsDataURL(f)}function showPhoto(url){const img=document.createElement('img');img.alt='追加した実写写真';img.src=url;$('#photo').replaceChildren(img)}
 
 function enterGame(){document.getElementById('splash').classList.add('hidden');home();window.scrollTo(0,0)}
@@ -234,4 +234,77 @@ function finish(){const total=list().length;const rate=Math.round(correctCount/t
 
 // Initialize only after cinematic image constants and overridden renderers are defined.
 home();
-</script></body></html>
+</script>
+<style>
+.sound-panel{position:fixed;right:14px;bottom:14px;z-index:9999;display:flex;align-items:center;gap:8px;background:rgba(7,20,37,.94);border:1px solid #66a7cf;border-radius:16px;padding:9px 12px;box-shadow:0 5px 30px #0009;color:#fff;font:600 13px system-ui,sans-serif;backdrop-filter:blur(8px)}
+.sound-panel button{background:#153653;border:1px solid #467ba1;border-radius:10px;color:#fff;padding:8px 11px;cursor:pointer;font:inherit}.sound-panel input{width:85px;accent-color:#72d2ff}.sound-panel button:focus-visible{outline:3px solid #ffcf76}@media(max-width:600px){.sound-panel{right:8px;bottom:8px;padding:7px;gap:5px}.sound-panel input{width:55px}}
+.sound-panel .sound-preview{font-size:12px;white-space:nowrap;padding:6px 8px;border-radius:8px;cursor:pointer}
+@media print{.sound-panel{display:none}}
+
+.mission-launch-banner{position:fixed;z-index:99999;left:50%;top:18%;transform:translateX(-50%);width:min(90vw,570px);padding:22px 30px;text-align:center;pointer-events:none;background:linear-gradient(125deg,rgba(4,19,35,.96),rgba(18,55,80,.95));border:2px solid #e6b768;border-radius:20px;box-shadow:0 15px 70px #000a,0 0 28px #efb95d77;color:white;display:flex;flex-direction:column;gap:5px;animation:missionLaunch 4.2s ease-out forwards}
+.mission-launch-banner span{color:#9ad9ff;letter-spacing:.2em;font-size:14px;font-weight:800}
+.mission-launch-banner strong{font-size:clamp(26px,5vw,49px);color:#ffe09a;letter-spacing:.08em;text-shadow:0 0 22px #e9aa3e}
+.mission-launch-banner small{font-size:17px;color:#e0edf9}
+@keyframes missionLaunch{0%{opacity:0;transform:translate(-50%,-30px) scale(.9)}9%{opacity:1;transform:translate(-50%,0) scale(1)}70%{opacity:1}100%{opacity:0;transform:translate(-50%,-12px) scale(1.03)}}
+@media(prefers-reduced-motion:reduce){.mission-launch-banner{animation:none;display:none}}
+@media print{.mission-launch-banner{display:none}}
+</style>
+<div class="sound-panel" aria-label="効果音設定"><button id="soundSwitch" type="button" onclick="missionSound.toggle()" aria-pressed="true">🔊 効果音 ON</button><label for="soundVolume">音量</label><input id="soundVolume" type="range" min="0" max="100" value="100" oninput="missionSound.volume(this.value)" aria-label="効果音の音量"><button type="button" class="sound-preview" onclick="missionSound.play('intro')" title="スタート音楽を試聴">🚨 開始音楽</button><button type="button" class="sound-preview" onclick="missionSound.play('select')" title="コース選択音を試聴">🎮 選択音</button><button type="button" class="sound-preview" onclick="missionSound.play('correct')" title="正解音を試聴">🎉 正解音</button><button type="button" class="sound-preview" onclick="missionSound.play('wrong')" title="不正解音を試聴">😢 残念音</button></div>
+<script>
+/* Web Audio synthesized sound effects. No network or external audio files needed. */
+const missionSound=(()=>{
+ let enabled=true, level=1,ctx=null;
+ function context(){try{if(!ctx)ctx=new (window.AudioContext||window.webkitAudioContext)();if(ctx.state==='suspended')ctx.resume().catch(()=>{});return ctx}catch(e){return null}}
+ function note(freq,start,duration,type='sine',gain=.22,endFreq=null){const c=context();if(!c||!enabled||level===0)return;try{const t=c.currentTime+start,o=c.createOscillator(),g=c.createGain();o.type=type;o.frequency.setValueAtTime(freq,t);if(endFreq)o.frequency.exponentialRampToValueAtTime(endFreq,t+duration);g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(Math.max(.0001,gain*level),t+.012);g.gain.exponentialRampToValueAtTime(.0001,t+duration);o.connect(g);g.connect(c.destination);o.start(t);o.stop(t+duration+.02)}catch(e){}}
+ function play(kind){
+  if(!enabled)return;
+  if(kind==='select'){
+   // Short, punchy mission-selection confirmation: electronic click and rising two-tone signal.
+   note(620,0,.045,'square',.11,850);
+   note(784,.045,.105,'triangle',.17);
+   note(1174.66,.125,.16,'sine',.13);
+  }else if(kind==='correct'){
+   // Celebratory arcade-style major chord, rising flourish and a bright sparkle.
+   [[523.25,0,.13],[659.25,.11,.13],[783.99,.22,.13],[1046.50,.34,.27],[1318.51,.40,.24]].forEach(([f,t,d])=>note(f,t,d,'triangle',.20));
+   [523.25,659.25,783.99].forEach((f,i)=>note(f,.48,.34,'sine',.095));
+   note(1567.98,.63,.19,'sine',.10);note(2093,.75,.28,'sine',.09);
+  }else if(kind==='wrong'){
+   // Comic 'too bad...' descending trombone-like sequence, never harsh or alarming.
+   note(392,0,.25,'sawtooth',.095,349.23);
+   note(349.23,.24,.27,'sawtooth',.095,293.66);
+   note(293.66,.51,.48,'triangle',.20,174.61);
+   note(174.61,.80,.32,'sine',.12,155.56);
+  }else if(kind==='intro'){
+   // ~4-second upbeat, triumphant launch fanfare with a lively rhythmic opening.
+   const melody=[[523.25,0,.15],[659.25,.18,.15],[783.99,.36,.20],[1046.5,.59,.32],
+     [783.99,1.00,.14],[880,1.18,.14],[1046.5,1.37,.32],
+     [1174.66,1.82,.16],[1318.51,2.02,.16],[1567.98,2.24,.24],[2093,2.57,.70]];
+   melody.forEach(([f,t,d])=>note(f,t,d,'triangle',.19));
+   [0,.36,.72,1.08,1.44,1.80,2.16,2.52].forEach((t,i)=>note(i%2?196:261.63,t,.11,'square',.075));
+   [523.25,659.25,783.99].forEach(f=>note(f,2.64,.62,'sine',.065));
+   note(2637,3.05,.23,'sine',.055);
+  }else if(kind==='finish'){
+   // Longer victory fanfare at the end of five questions.
+   [[392,0,.15],[523.25,.15,.15],[659.25,.30,.15],[783.99,.45,.25],[659.25,.72,.14],[783.99,.86,.14],[1046.5,1,.62]].forEach(([f,t,d])=>note(f,t,d,'triangle',.19));
+   [523.25,659.25,783.99].forEach(f=>note(f,1.12,.46,'sine',.085));
+   note(1567.98,1.35,.28,'sine',.10);
+  }
+ }
+ function toggle(){enabled=!enabled;const b=document.getElementById('soundSwitch');b.textContent=enabled?'🔊 効果音 ON':'🔇 効果音 OFF';b.setAttribute('aria-pressed',String(enabled));if(enabled)play('correct')}
+ function volume(v){level=Math.max(0,Math.min(1,Number(v)/100))}
+ return{play,toggle,volume};
+})();
+// A click on the splash is a user gesture, so the browser permits this soundtrack.
+const missionOriginalEnterGame=enterGame;
+enterGame=function(){missionSound.play('intro');missionOriginalEnterGame();
+ const banner=document.createElement('div');banner.className='mission-launch-banner';
+ banner.innerHTML='<span>🚨 MISSION 119</span><strong>MISSION START!</strong><small>挑戦の準備はいいか？</small>';
+ document.body.appendChild(banner);
+ banner.addEventListener('animationend',()=>banner.remove(),{once:true});
+};
+const missionOriginalConfirm=confirmAnswer;
+confirmAnswer=function(){if(locked||!selected.length)return;const q=list()[idx];const ok=selected.length===q.answers.length&&selected.every(x=>q.answers.includes(x));missionOriginalConfirm();missionSound.play(ok?'correct':'wrong')};
+const missionOriginalFinish=finish;
+finish=function(){missionOriginalFinish();missionSound.play('finish')};
+</script>
+</body></html>
